@@ -1,38 +1,44 @@
-//Importing the Express by using require() method from node_modules folder 
 const express = require("express");
 
 
-//I am creating new express js application----------------------->
 const app = express();
 
-//<-----------------------------------Handling The Incoming Request-------------------------------------------->
-
-// app.use("/user" , ( req , res) => {
-//    //This will override all the lower code
-//     res.send("I will be a richest person in  India");
-// });
-
-
-//This will only handle only GET call to /user.
 app.get("/user" , ( req , res) => {
+    console.log(req.query);
+    res.send({firstName:"Vikas" , secondName:"Kumar"});
+});
+
+//DYNAMIC ROUTES-->
+app.get("/user/:userId/:name/:password" , ( req , res) => {
+    console.log(req.params);
     res.send({firstName:"Vikas" , secondName:"Kumar"});
 });
 
 
-app.post("/user" , ( req , res) => {
-    // saving data to DB
-    res.send("Data succesfully saved to the database");
+app.get(/.*fly/ , ( req , res) => {
+    // regex --> /a/
+    //regex --> /.*fly/
+    res.send({firstName:"Vikas" , secondName:"Kumar"});
 });
 
-
-app.delete("/user" , ( req , res) => {
-    res.send("Deleted succesfully");
+app.get("/ab?c" , ( req , res) => {
+    // b is optional
+    res.send({firstName:"Vikas" , secondName:"Kumar"});
 });
 
-//This will match all the HTTP method API calls to /test
-app.use("/test" , ( req , res) => {
-    // This Handler will not only handle my /test but it will also handle anything that will come after /test . eg:- /test/xyz , /test/Vikas , /test/Vishal..These all will gave lower output.
-    res.send("Hello from the test Server!! 😄");
+app.get("/a(bc)?d" , ( req , res) => {
+    // bc is optional
+    res.send({firstName:"Vikas" , secondName:"Kumar"});
+});
+
+app.get("/ab+c" , ( req , res) => {
+    // a and c at the last and there can be you can add many b.
+    res.send({firstName:"Vikas" , secondName:"Kumar"});
+});
+
+app.get("/ab*cd" , ( req , res) => {
+    // anything you can insert between ab and cd , it will run.
+    res.send({firstName:"Vikas" , secondName:"Kumar"});
 });
 
 app.listen(7777 , () => {

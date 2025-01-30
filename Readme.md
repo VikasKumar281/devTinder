@@ -15,7 +15,11 @@
 - .gitignore
 - Create a remote repo on github
 - Push all code to remote origin
-- routes and rout extension 
+- routes and route extension 
 - Order of the routes matter a lot
 - Installed Postman app and make a workspace/collection then test API call -(PUT,GET,PATCH,DELETE,OPTIONS,POST etc.) 
-- Write logic to handle GET , POST , PATCH , DELETE API calls and test them on Postman
+- Wrote logic to handle GET , POST , PATCH , DELETE API calls and test them on Postman
+- Explored routing and use of ? , + , * , () in the routes
+- Use of regex in routes("/a/ , /.*fly$/")
+- Reading the query params in the routes
+- Reading the dynamic routes
