@@ -9,3 +9,13 @@
 - Listen to Port 7777
 - Write request handlers for /test , /Vikas
 - Install nodemon and update scripts inside package.json
+
+
+- initialize git repository
+- .gitignore
+- Create a remote repo on github
+- Push all code to remote origin
+- routes and rout extension 
+- Order of the routes matter a lot
+- Installed Postman app and make a workspace/collection then test API call -(PUT,GET,PATCH,DELETE,OPTIONS,POST etc.) 
+- Write logic to handle GET , POST , PATCH , DELETE API calls and test them on Postman
