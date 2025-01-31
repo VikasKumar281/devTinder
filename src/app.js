@@ -2,28 +2,27 @@ const express = require("express");
 
 const app = express();
 
-const { adminAuth , userAuth } = require("./middlewares/auth");
+app.get("/getUserData" , (req , res) => {
 
-//Handle Auth Middleware for all GET , POST ,... requests
-app.use("/admin" , adminAuth);
+    // try{
+    //Logic of DB call and get user data 
 
-app.post("/user/login" , (req , res) => {
-    res.send("User logged in Successfully");
-})
-
-app.get("/user" , userAuth ,  (req , res) => {
-    res.send("User Data Sent"); 
+    throw new Error ("hdbhef");
+    
+    res.send("User Data sent");
+    // }
+    // catch(err){
+    //     res.status(500).send("Something Went wrong Vikas");
+    // }
 });
 
-app.get("/admin/getAllData" , ( req , res) => {
-    //Logic of checking if the request is authorised
-    res.send("All Data Sent");
-});
-
-app.get("/admin/deleteAUser" , ( req , res) => {
-    res.send("Deleted a User");
+app.use("/" , (err ,req ,res , next ) => {
+    if(err){
+        //Log your Errors
+        res.status(500).send("Something Went Wrong!!");
+    }
 });
 
 app.listen(7777 , () => {
     console.log("Server is successfully listening on port 7777....");
-});//Port no. --> 3000
+});//Port no. --> 7777
