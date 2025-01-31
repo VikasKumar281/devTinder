@@ -2,34 +2,27 @@ const express = require("express");
 
 const app = express();
 
-app.get("/user" , ( req , res , next) => {
-    //the function is Known as Route Handler.
-    console.log("Handling the route user");
-    // next();
-    // res.send("Route Handler 1"); 
-    next();
-} ,
-[( req , res , next) => {
-    console.log("Handling the route user 2");
-    // res.send("Route Handler 2");
-    next();
-},
-( req , res , next) => {
-    console.log("Handling the route user 3");
-    // res.send("Route Handler 3");
-    next();
-}],
-( req , res , next) => {
-    console.log("Handling the route user 4");
-    // res.send("Route Handler 4");
-    next();
-},
-( req , res) => {
-    console.log("Handling the route user 5");
-    res.send("Route Handler 5");
-},
+const { adminAuth , userAuth } = require("./middlewares/auth");
 
-);
+//Handle Auth Middleware for all GET , POST ,... requests
+app.use("/admin" , adminAuth);
+
+app.post("/user/login" , (req , res) => {
+    res.send("User logged in Successfully");
+})
+
+app.get("/user" , userAuth ,  (req , res) => {
+    res.send("User Data Sent"); 
+});
+
+app.get("/admin/getAllData" , ( req , res) => {
+    //Logic of checking if the request is authorised
+    res.send("All Data Sent");
+});
+
+app.get("/admin/deleteAUser" , ( req , res) => {
+    res.send("Deleted a User");
+});
 
 app.listen(7777 , () => {
     console.log("Server is successfully listening on port 7777....");
