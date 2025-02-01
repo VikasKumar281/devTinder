@@ -1,28 +1,34 @@
 const express = require("express");
-
+const connectDB = require("./config/database");
 const app = express();
+const User = require("./models/user");
 
-app.get("/getUserData" , (req , res) => {
-
-    // try{
-    //Logic of DB call and get user data 
-
-    throw new Error ("hdbhef");
+app.post("/signup" ,async (req , res) => {
+    //Creating a new instance of a User model 
+    const user = new User({
+        firstName : "Sachin",
+        lastName : "Kumar",
+        emailId : "Sachinkumar280204@gmail.com",
+        password : "SachinKumar123",
+    });
     
-    res.send("User Data sent");
-    // }
-    // catch(err){
-    //     res.status(500).send("Something Went wrong Vikas");
-    // }
-});
-
-app.use("/" , (err ,req ,res , next ) => {
-    if(err){
-        //Log your Errors
-        res.status(500).send("Something Went Wrong!!");
+    try{
+       await user.save();
+       res.send("User added successfully");
+    } catch(err){
+       res.status(400).send("Error saving the user:" + err.message);
     }
+
+
 });
 
-app.listen(7777 , () => {
-    console.log("Server is successfully listening on port 7777....");
-});//Port no. --> 7777
+connectDB()
+  .then(() => {
+     console.log("Database connection established");
+     app.listen(7777 , () => {
+     console.log("Server is successfully listening on port 7777....");
+      });//Port no. --> 7777
+   })
+   .catch(err =>{
+    console.error("Database can not be connected",err);
+  });
