@@ -3,22 +3,32 @@ const connectDB = require("./config/database");
 const app = express();
 const User = require("./models/user");
 
+
+app.use(express.json()); 
+
 app.post("/signup" ,async (req , res) => {
-    //Creating a new instance of a User model 
-    const user = new User({
-        firstName : "Sachin",
-        lastName : "Kumar",
-        emailId : "Sachinkumar280204@gmail.com",
-        password : "SachinKumar123",
-    });
+   
+   // console.log(req.body);
+   const user = new User(req.body);
+
+
+//Creating a new instance of a User model 
+// This is a JavaScript Object not JSON object
+   //  const user = new User({
+   //      firstName : "Mahendra",
+   //      lastName : "Singh",
+   //      emailId : "MahendraSinghDhoni280204@gmail.com",
+   //      password : "MahendraDhoni 123",
+   //  });
     
+   
     try{
        await user.save();
        res.send("User added successfully");
-    } catch(err){
+    }
+    catch(err){
        res.status(400).send("Error saving the user:" + err.message);
     }
-
 
 });
 
