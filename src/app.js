@@ -85,16 +85,30 @@ app.get("/feed", async (req , res) => {
 
 
 //Update the data of the user-------------------------------------->
-app.patch("/user" , async (req , res) => {
-
-   const userId = req.body.userId;
-   // const userId = req.body._id;
+app.patch("/user/:userId" , async (req , res) => {
    
+   const userId = req.params?.userId;
+   
+   // const userId = req.body.userId;
+   // const userId = req.body._id;
 
    const data = req.body;
-   // console.log(data);
 
    try{
+      const ALLOWED_UPDATES = [
+          "photoUrl" , "about" , "gender" , "age" , "skills"
+      ];
+   
+      const isUpdateAllowed = Object.keys(data).every((k) => 
+         ALLOWED_UPDATES.includes(k)
+      );
+      if(!isUpdateAllowed){
+         throw new Error("You can not update your name and emailId");
+      }
+      if(data?.skills.length > 10){
+         throw new Error("You can not add more than 10 skills");
+      }
+
       // const user = await User.findByIdAndUpdate({_id : userId} , data , {returnDocument : "before",});
       const user = await User.findByIdAndUpdate(userId, data , {
            returnDocument : "before",
