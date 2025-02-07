@@ -78,8 +78,8 @@ app.patch("/user/:userId" , async (req , res) => {
           "photoUrl" , "about" , "gender" , "age" , "skills"
       ];
    
-      const isUpdateAllowed = Object.keys(data).every((k) => 
-         ALLOWED_UPDATES.includes(k)
+      const isUpdateAllowed = Object.keys(data).every((fields) => 
+         ALLOWED_UPDATES.includes(fields)
       );
       if(!isUpdateAllowed){
          throw new Error("You can not update your name and emailId");
