@@ -1,42 +1,23 @@
 const express = require("express");
-
 const connectDB = require("./config/database");
-
 const app = express();
-
-const User = require("./models/user");
+const cookieParser = require("cookie-parser");
 
 
 app.use(express.json()); 
+app.use(cookieParser());
 
 
-// POST /signup API --> Post the users info (as document) in the MongoDB collection
-app.post("/signup" ,async (req , res) => {
-   
-   // console.log(req.body);
-   const user = new User(req.body);
+//IMPORTING ROUTERS----->
+const authRouter = require("./routes/authRouter");
+const profileRouter = require("./routes/profileRouter");
+const connectionRequestRouter = require("./routes/connectionRequestRouter");
 
 
-//Creating a new instance of a User model 
-// This is a JavaScript Object not JSON object
-   //  const user = new User({
-   //      firstName : "Mahendra",
-   //      lastName : "Singh",
-   //      emailId : "MahendraSinghDhoni280204@gmail.com",
-   //      password : "MahendraDhoni 123",
-   //  });
-    
-
-    try{
-       await user.save();
-       res.send("User added successfully");
-    }
-    catch(err){
-       res.status(400).send("Error saving the user:" + err.message);
-    }
-
-});
-
+//Use the Routers
+app.use("/" , authRouter);
+app.use("/" , profileRouter);
+app.use("/" , connectionRequestRouter);
 
 
 //Get user by emailId --------------------------------------------------->
@@ -68,7 +49,6 @@ app.get("/user" , async (req , res) => {
 });
 
 
-
 //Feed API - GET /feed - get all the users from the database ------------------------>
 app.get("/feed", async (req , res) => {
    
@@ -81,7 +61,6 @@ app.get("/feed", async (req , res) => {
    }
 
 });
-
 
 
 //Update the data of the user-------------------------------------->
@@ -124,7 +103,6 @@ app.patch("/user/:userId" , async (req , res) => {
 });
 
 
-
 //DELETE API - Delete the user from the database------------------------------------------>
 app.delete("/user" , async (req , res) => {
  
@@ -140,8 +118,6 @@ app.delete("/user" , async (req , res) => {
     res.status(400).send("Something went wrong");
   }
 });
-
-
 
 
 connectDB()
