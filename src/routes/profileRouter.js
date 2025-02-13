@@ -1,6 +1,7 @@
 const { userAuth } = require("../middlewares/auth");
-const user = require("../models/user");
+const User = require("../models/user");
 const { validateEditProfileData } = require("../utils/validation");
+const bcrypt = require("bcrypt");
 
 
 const express = require("express");
@@ -19,6 +20,7 @@ profileRouter.get("/profile/view" , userAuth , async (req , res) => {
       res.status(400).send("Error saving the user:" + err.message);
     }
 });
+
 
 //PATCH /profile/edit API-------------------->
 profileRouter.patch("/profile/edit" , userAuth , async (req ,res) => {
@@ -42,5 +44,43 @@ profileRouter.patch("/profile/edit" , userAuth , async (req ,res) => {
    }
      
 })
+
+
+// PATCH /profile/password API------------------>
+profileRouter.patch("/profile/password" , userAuth , async (req , res) => {
+ try{ 
+  const{password , newPassword} = req.body;
+  const userId = req.user._id;
+
+ //Find the user by Id-----> 
+  const user = await User.findById(userId);
+  if(!user) {
+    throw new Error("User not found");
+  }
+
+
+//Verify the oldPassword-------------->  
+  const isMatched = bcrypt.compare(password , newPassword);
+  if(!isMatched){
+    throw new Error("Old password is not matched");
+  }
+
+
+//Create new Password --------------->
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(newPassword , salt);
+  
+  user.password = hashedPassword;
+  await user.save();
+
+  res.send("Password updated successfully");
+
+ }
+ catch(err){
+  res.status(400).send("ERROR: " + err.message);
+ }
+   
+});
+
 
 module.exports = profileRouter;
