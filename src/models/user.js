@@ -110,8 +110,7 @@
 
 
 
-
- const mongoose = require("mongoose");
+const mongoose = require("mongoose");
 const validator = require("validator");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
@@ -173,6 +172,8 @@ const userSchema = new mongoose.Schema(
     },
     photoUrl: {
       type: String,
+      maxlength:1000,
+      trim: true,
       default: "https://geographyandyou.com/images/user-profile.png",
       validate(value) {
         if (!validator.isURL(value)) {
@@ -182,6 +183,8 @@ const userSchema = new mongoose.Schema(
     },
     about: {
       type: String,
+      maxlength:1000,
+      trim: true,
       default: "This is a default about of the user!",
     },
     skills: {
