@@ -12,12 +12,16 @@ require('dotenv').config();
 require("./utils/cronjob");
 
 
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", req.headers.origin);
+  res.header("Access-Control-Allow-Credentials", "true");
+  next();
+});
+
+// CORS Middleware
 app.use(cors({
-   origin:["http://localhost:5173","https://dev-tinder-web-gules.vercel.app/"
-],
-   methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-   credentials: true,
+  origin: ["http://localhost:5173", "https://dev-tinder-web-gules.vercel.app"],
+  credentials: true,
 }));
 
 
