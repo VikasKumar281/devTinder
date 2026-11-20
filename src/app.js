@@ -28,6 +28,10 @@ app.use(cors({
 app.use(express.json()); 
 app.use(cookieParser());
 
+app.get("/", (req, res) => {
+  res.send("DevTinder API is running");
+});
+
 
 //IMPORTING ROUTERS----->
 // const authRouter = require("./routes/authRouter");
@@ -157,15 +161,18 @@ initializeSocket(server);
 // });
 
 
+const PORT = process.env.PORT || 7777;
+
+server.listen(PORT, "0.0.0.0", () => {
+  console.log("Server is listening on port " + PORT);
+});
+
 connectDB()
   .then(() => {
-     console.log("Database connection established");
-     server.listen(process.env.PORT , () => {
-     console.log("Server is successfully listening on port 7777....");
-      });//Port no. --> 7777
-   })
-   .catch(err =>{
-    console.error("Database can not be connected",err);
+    console.log("Database connection established");
+  })
+  .catch((err) => {
+    console.error("Database can not be connected", err);
   });
 
 

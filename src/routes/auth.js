@@ -206,10 +206,12 @@ const User = require("../models/user");
 
 const authRouter = express.Router();
 
+const isProduction = process.env.NODE_ENV === "production";
+
 const cookieOptions = {
   httpOnly: true,
-  secure: true,
-  sameSite: "None",
+  secure: isProduction,
+  sameSite: isProduction ? "None" : "Lax",
   expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
 };
 
@@ -273,9 +275,7 @@ authRouter.post("/login", async (req, res) => {
 
 authRouter.post("/logout", (req, res) => {
   res.cookie("token", null, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "None",
+    ...cookieOptions,
     expires: new Date(Date.now()),
   });
   res.send("Logged out successfully");

@@ -22,7 +22,7 @@ cron.schedule("0 8 * * *",async () => {
       }).populate("fromUserId toUserId"); 
 
       // You passes this map inside a Set and this Set will find the all unique items and this (...) will converted back arrau.
-      const listOfEmails = [...new Set(pendingRequests,map(req => req.toUserId.emailId))];
+      const listOfEmails = [...new Set(pendingRequests.map((req) => req.toUserId.emailId))];
       for (const email of listOfEmails){
         //Send Emails
       }
