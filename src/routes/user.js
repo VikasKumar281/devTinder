@@ -146,7 +146,7 @@ userRouter.get("/user/requests/received", userAuth, async (req, res) => {
       data: connectionRequests,
     });
   } catch (err) {
-    req.statusCode(400).send("ERROR: " + err.message);
+    res.status(400).send("ERROR: " + err.message);
   }
 });
 
@@ -212,4 +212,41 @@ userRouter.get("/user/feed", userAuth, async (req, res) => {
     res.status(400).json({ message: err.message });
   }
 });
+
+userRouter.get("/user/search", userAuth, async (req, res) => {
+  try {
+    const name = String(req.query.name || "").trim();
+    if (!name) {
+      return res.json({ data: [] });
+    }
+
+    const safeName = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const users = await User.find({
+      _id: { $ne: req.user._id },
+      $or: [
+        { firstName: { $regex: safeName, $options: "i" } },
+        { lastName: { $regex: safeName, $options: "i" } },
+      ],
+    })
+      .select(USER_SAFE_DATA)
+      .limit(8);
+
+    res.json({ data: users });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+userRouter.get("/user/view/:userId", userAuth, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId).select(USER_SAFE_DATA);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.json({ data: user });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
 module.exports = userRouter;

@@ -229,8 +229,9 @@ const userSchema = new mongoose.Schema(
     firstName: {
       type: String,
       required: true,
-      minLength: 4,
+      minLength: 2,
       maxLength: 50,
+      trim: true,
     },
     lastName: {
       type: String,
@@ -264,7 +265,15 @@ const userSchema = new mongoose.Schema(
       trim: true,
       default: "https://geographyandyou.com/images/user-profile.png",
       validate(value) {
-        if (!validator.isURL(value)) {
+        if (!value) return;
+        const isHostedImage = validator.isURL(value, {
+          require_protocol: true,
+          protocols: ["http", "https"],
+        });
+        const isUploadedImage = /^data:image\/(png|jpeg|jpg|webp);base64,/i.test(
+          value
+        );
+        if (!isHostedImage && !isUploadedImage) {
           throw new Error("Invalid photo URL");
         }
       },

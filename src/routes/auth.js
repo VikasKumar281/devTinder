@@ -224,7 +224,9 @@ authRouter.post("/signup", async (req, res) => {
     }
 
     if (!validator.isStrongPassword(password)) {
-      throw new Error("Password is not strong enough");
+      throw new Error(
+        "Password must be at least 8 characters and include uppercase, lowercase, a number, and a symbol"
+      );
     }
 
     const existingUser = await User.findOne({ emailId });
@@ -244,7 +246,9 @@ authRouter.post("/signup", async (req, res) => {
     const token = user.getJWT();
     res.cookie("token", token, cookieOptions);
 
-    res.status(201).json({ data: user });
+    const savedUser = user.toObject();
+    delete savedUser.password;
+    res.status(201).json({ data: savedUser });
   } catch (err) {
     res.status(400).send(err.message);
   }
@@ -267,7 +271,9 @@ authRouter.post("/login", async (req, res) => {
     const token = user.getJWT();
     res.cookie("token", token, cookieOptions);
 
-    res.json(user);
+    const loggedInUser = user.toObject();
+    delete loggedInUser.password;
+    res.json(loggedInUser);
   } catch (err) {
     res.status(400).send(err.message);
   }

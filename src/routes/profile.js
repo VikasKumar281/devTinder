@@ -83,7 +83,10 @@
 
 
 const express = require("express");
+const bcrypt = require("bcrypt");
+const validator = require("validator");
 const profileRouter = express.Router();
+const User = require("../models/user");
 
 const { userAuth } = require("../middlewares/auth");
 const { validateEditProfileData } = require("../utils/validation");
@@ -106,16 +109,72 @@ profileRouter.post("/profile/edit", userAuth, async (req, res) => {
 
     const loggedInUser = req.user;
 
+    if (req.body.emailId) {
+      const emailId = String(req.body.emailId).trim().toLowerCase();
+      if (!validator.isEmail(emailId)) {
+        throw new Error("Email is not valid");
+      }
+      const existing = await User.findOne({ emailId, _id: { $ne: loggedInUser._id } });
+      if (existing) {
+        throw new Error("This email is already used");
+      }
+      req.body.emailId = emailId;
+    }
+
+    delete req.body.password;
+
+    if (typeof req.body.firstName === "string") {
+      req.body.firstName = req.body.firstName.trim();
+    }
+
+    if (typeof req.body.photoUrl === "string") {
+      req.body.photoUrl = req.body.photoUrl.trim();
+      if (!req.body.photoUrl) {
+        delete req.body.photoUrl;
+      }
+    }
+
     Object.keys(req.body).forEach((key) => (loggedInUser[key] = req.body[key]));
 
     await loggedInUser.save();
 
+    const data = loggedInUser.toObject();
+    delete data.password;
+
     res.json({
       message: `${loggedInUser.firstName}, your profile updated successfuly`,
-      data: loggedInUser,
+      data,
     });
   } catch (err) {
     res.status(400).send("ERROR : " + err.message);
+  }
+});
+
+profileRouter.post("/profile/password", userAuth, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const user = req.user;
+
+    if (!currentPassword || !newPassword) {
+      throw new Error("Current password and new password are required");
+    }
+
+    const isValid = await user.validatePassword(currentPassword);
+    if (!isValid) {
+      throw new Error("Current password is wrong");
+    }
+
+    if (!validator.isStrongPassword(newPassword)) {
+      throw new Error(
+        "New password must be at least 8 characters and include uppercase, lowercase, a number, and a symbol"
+      );
+    }
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+    res.json({ message: "Password updated" });
+  } catch (err) {
+    res.status(400).send(err.message);
   }
 });
 
