@@ -360,6 +360,62 @@ authRouter.post("/auth/google", async (req, res) => {
   }
 });
 
+authRouter.post("/auth/forgot", async (req, res) => {
+  try {
+    const emailId = String(req.body.emailId || "").trim().toLowerCase();
+    const generic = "If that email is registered, a reset link is on its way.";
+    if (!validator.isEmail(emailId)) {
+      return res.json({ message: generic });
+    }
+    const user = await User.findOne({ emailId });
+    if (user) {
+      const raw = crypto.randomBytes(32).toString("hex");
+      user.resetToken = crypto.createHash("sha256").update(raw).digest("hex");
+      user.resetTokenExpires = new Date(Date.now() + 30 * 60 * 1000);
+      await user.save();
+      const origin = req.headers.origin;
+      const base =
+        origin === "http://localhost:5173" || origin === "https://dev-tinder-web-gules.vercel.app"
+          ? origin
+          : process.env.CLIENT_URL || "http://localhost:5173";
+      const { sendResetEmail } = require("../utils/sendMail");
+      await sendResetEmail({
+        email: emailId,
+        link: base + "/reset-password?token=" + raw,
+      });
+    }
+    res.json({ message: generic });
+  } catch (err) {
+    res.status(400).json({ message: err.message || "Could not send reset email" });
+  }
+});
+
+authRouter.post("/auth/reset", async (req, res) => {
+  try {
+    const token = String(req.body.token || "");
+    const password = String(req.body.password || "");
+    if (!token) throw new Error("Reset link is missing");
+    if (!validator.isStrongPassword(password)) {
+      throw new Error(
+        "Password must be at least 8 characters and include uppercase, lowercase, a number, and a symbol"
+      );
+    }
+    const hashed = crypto.createHash("sha256").update(token).digest("hex");
+    const user = await User.findOne({
+      resetToken: hashed,
+      resetTokenExpires: { $gt: new Date() },
+    });
+    if (!user) throw new Error("This reset link is invalid or expired");
+    user.password = await bcrypt.hash(password, 10);
+    user.resetToken = undefined;
+    user.resetTokenExpires = undefined;
+    await user.save();
+    res.json({ message: "Password updated. You can log in now." });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
 authRouter.post("/logout", (req, res) => {
   res.cookie("token", null, {
     ...cookieOptions,

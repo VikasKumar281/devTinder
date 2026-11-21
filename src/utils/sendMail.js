@@ -54,4 +54,12 @@ const sendContactEmails = async ({ name, email, topic, message }) => {
   return sent;
 };
 
-module.exports = { sendContactEmails, ADMIN_EMAIL };
+const sendResetEmail = async ({ email, link }) => {
+  await sendViaFormSubmit(email, {
+    email,
+    message: "Reset your DevTinder password using this link (valid for 30 minutes): " + link,
+    _subject: "Reset your DevTinder password",
+  });
+};
+
+module.exports = { sendContactEmails, sendResetEmail, ADMIN_EMAIL };
