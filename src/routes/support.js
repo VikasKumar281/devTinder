@@ -5,6 +5,7 @@ const SupportTopic = require("../models/supportTopic");
 const SupportFaq = require("../models/supportFaq");
 const ContactMessage = require("../models/contactMessage");
 const { seedSupport } = require("../utils/seedSupport");
+const { sendContactEmails } = require("../utils/sendMail");
 
 supportRouter.get("/support/content", async (req, res) => {
   try {
@@ -14,6 +15,18 @@ supportRouter.get("/support/content", async (req, res) => {
       SupportFaq.find().sort({ order: 1 }),
     ]);
     res.json({ data: { topics, faqs } });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+supportRouter.get("/support/faq/:id", async (req, res) => {
+  try {
+    const faq = await SupportFaq.findById(req.params.id);
+    if (!faq) {
+      return res.status(404).json({ message: "Question not found" });
+    }
+    res.json({ data: faq });
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
@@ -37,14 +50,23 @@ supportRouter.post("/support/contact", async (req, res) => {
     }
 
     const saved = await ContactMessage.create({ name, email, topic, message });
+
+    let emailSent = false;
+    try {
+      emailSent = await sendContactEmails({ name, email, topic, message });
+    } catch (mailErr) {
+      console.error("Contact email failed", mailErr.message);
+    }
+
     res.status(201).json({
-      message: "Message stored",
+      message: emailSent ? "Message stored and email sent" : "Message stored",
       data: {
         _id: saved._id,
         name: saved.name,
         email: saved.email,
         topic: saved.topic,
         createdAt: saved.createdAt,
+        emailSent,
       },
     });
   } catch (err) {

@@ -201,7 +201,9 @@
 
 const express = require("express");
 const bcrypt = require("bcrypt");
+const crypto = require("crypto");
 const validator = require("validator");
+const { OAuth2Client } = require("google-auth-library");
 const User = require("../models/user");
 
 const authRouter = express.Router();
@@ -274,6 +276,73 @@ authRouter.post("/login", async (req, res) => {
     const loggedInUser = user.toObject();
     delete loggedInUser.password;
     res.json(loggedInUser);
+  } catch (err) {
+    res.status(400).send(err.message);
+  }
+});
+
+const googleClientId =
+  process.env.GOOGLE_CLIENT_ID ||
+  "906413381089-qm4m82gvie7gdu7r1qdr1faq8i5upqbu.apps.googleusercontent.com";
+
+authRouter.get("/auth/google-config", (req, res) => {
+  res.json({ clientId: googleClientId });
+});
+
+authRouter.post("/auth/google", async (req, res) => {
+  try {
+    const { credential } = req.body;
+    const clientId = googleClientId;
+    if (!clientId) {
+      throw new Error("Google login is not configured");
+    }
+    if (!credential) {
+      throw new Error("Google credential missing");
+    }
+
+    const googleClient = new OAuth2Client(clientId);
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: clientId,
+    });
+    const payload = ticket.getPayload();
+    if (!payload?.email || payload.email_verified !== true) {
+      throw new Error("Google account is not verified");
+    }
+
+    const emailId = payload.email.toLowerCase();
+    const given = String(payload.given_name || payload.name || "User").trim();
+    const firstName = given.slice(0, 50) || "User";
+    const lastName = String(payload.family_name || "").trim();
+    const photoUrl = payload.picture;
+
+    let user = await User.findOne({
+      $or: [{ googleId: payload.sub }, { emailId }],
+    });
+
+    if (!user) {
+      const passwordHash = await bcrypt.hash(crypto.randomBytes(24).toString("hex"), 10);
+      user = await User.create({
+        firstName,
+        lastName,
+        emailId,
+        password: passwordHash,
+        googleId: payload.sub,
+        authProvider: "google",
+        photoUrl: photoUrl || undefined,
+      });
+    } else if (!user.googleId) {
+      user.googleId = payload.sub;
+      user.authProvider = user.authProvider || "google";
+      if (!user.photoUrl && photoUrl) user.photoUrl = photoUrl;
+      await user.save();
+    }
+
+    const token = user.getJWT();
+    res.cookie("token", token, cookieOptions);
+    const safeUser = user.toObject();
+    delete safeUser.password;
+    res.json(safeUser);
   } catch (err) {
     res.status(400).send(err.message);
   }
