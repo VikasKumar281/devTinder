@@ -291,22 +291,33 @@ authRouter.get("/auth/google-config", (req, res) => {
 
 authRouter.post("/auth/google", async (req, res) => {
   try {
-    const { credential } = req.body;
+    const { credential, accessToken } = req.body;
     const clientId = googleClientId;
     if (!clientId) {
       throw new Error("Google login is not configured");
     }
-    if (!credential) {
+
+    let payload = null;
+    if (credential) {
+      const googleClient = new OAuth2Client(clientId);
+      const ticket = await googleClient.verifyIdToken({
+        idToken: credential,
+        audience: clientId,
+      });
+      payload = ticket.getPayload();
+    } else if (accessToken) {
+      const info = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+        headers: { Authorization: "Bearer " + accessToken },
+      });
+      if (!info.ok) {
+        throw new Error("Google account could not be verified");
+      }
+      payload = await info.json();
+    } else {
       throw new Error("Google credential missing");
     }
 
-    const googleClient = new OAuth2Client(clientId);
-    const ticket = await googleClient.verifyIdToken({
-      idToken: credential,
-      audience: clientId,
-    });
-    const payload = ticket.getPayload();
-    if (!payload?.email || payload.email_verified !== true) {
+    if (!payload?.email || payload.email_verified === false) {
       throw new Error("Google account is not verified");
     }
 
@@ -315,9 +326,10 @@ authRouter.post("/auth/google", async (req, res) => {
     const firstName = given.slice(0, 50) || "User";
     const lastName = String(payload.family_name || "").trim();
     const photoUrl = payload.picture;
+    const googleSub = payload.sub || payload.id;
 
     let user = await User.findOne({
-      $or: [{ googleId: payload.sub }, { emailId }],
+      $or: [{ googleId: googleSub }, { emailId }],
     });
 
     if (!user) {
@@ -327,12 +339,12 @@ authRouter.post("/auth/google", async (req, res) => {
         lastName,
         emailId,
         password: passwordHash,
-        googleId: payload.sub,
+        googleId: googleSub,
         authProvider: "google",
         photoUrl: photoUrl || undefined,
       });
     } else if (!user.googleId) {
-      user.googleId = payload.sub;
+      user.googleId = googleSub;
       user.authProvider = user.authProvider || "google";
       if (!user.photoUrl && photoUrl) user.photoUrl = photoUrl;
       await user.save();

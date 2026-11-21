@@ -10,52 +10,103 @@ const User = require("../models/user");
 
 const DUMMY_PASSWORD = "Dev@1234";
 
-const people = [
-  ["Aarav", "Mehta", 24, "male", "Builds React apps and likes late-night debugging.", ["React", "TypeScript"]],
-  ["Sara", "Khan", 26, "female", "Backend engineer who cares about clean APIs.", ["Node", "MongoDB"]],
-  ["Kabir", "Singh", 28, "male", "Full stack developer looking for project partners.", ["JavaScript", "Express"]],
-  ["Meera", "Iyer", 23, "female", "UI engineer. I turn Figma into working screens.", ["CSS", "React"]],
-  ["Rohan", "Das", 27, "male", "DevOps on weekdays, chess on weekends.", ["Docker", "AWS"]],
-  ["Ananya", "Rao", 25, "female", "Learning system design and open source.", ["Python", "Django"]],
-  ["Vivaan", "Joshi", 29, "male", "Mobile developer exploring web.", ["React Native", "JavaScript"]],
-  ["Ishita", "Verma", 22, "female", "Data and dashboards. Always up for a hackathon.", ["SQL", "Python"]],
-  ["Aisha", "Kapoor", 24, "female", "Product engineer who ships polished React apps.", ["React", "Figma"], 47],
-  ["Diya", "Sharma", 26, "female", "Frontend lead. I care about motion and clean UI.", ["CSS", "React"], 45],
-  ["Kiara", "Malhotra", 23, "female", "Mobile developer building smooth Android apps.", ["Kotlin", "Jetpack"], 44],
-  ["Navya", "Reddy", 27, "female", "Backend engineer. APIs, queues, and calm on-call nights.", ["Node", "PostgreSQL"], 49],
-  ["Pari", "Nair", 25, "female", "Design engineer. I sit between Figma and production.", ["UI", "TypeScript"], 48],
-  ["Riya", "Banerjee", 22, "female", "Data scientist who likes clear charts and good questions.", ["Python", "ML"], 32],
-  ["Saanvi", "Patel", 28, "female", "Full stack developer looking for a serious team.", ["JavaScript", "MongoDB"], 29],
-  ["Tara", "Gill", 24, "female", "Security-minded developer. I review code before I merge it.", ["Node", "Auth"], 25],
-  ["Zoya", "Qureshi", 26, "female", "DevOps engineer. I make deploys boring, in a good way.", ["Docker", "AWS"], 24],
-  ["Myra", "Chopra", 23, "female", "Open source contributor. React by day, side projects by night.", ["React", "GraphQL"], 20],
+const maleFirst = [
+  "Aarav", "Rohan", "Kabir", "Vivaan", "Aditya", "Arjun", "Ishaan", "Reyansh", "Shaurya", "Atharv",
+  "Krish", "Dhruv", "Ayaan", "Vihaan", "Kartik", "Nikhil", "Rahul", "Amit", "Harsh", "Yash",
+  "Karan", "Manish", "Siddharth", "Varun", "Rohan", "Dev", "Ankit", "Rajat", "Saurabh", "Tushar",
+  "Mohit", "Gaurav", "Pranav", "Neel", "Aryan", "Kunal", "Rishi", "Samar", "Yuvraj", "Laksh",
+  "Om", "Parth", "Raghav", "Shivansh", "Tanmay", "Uday", "Vedant", "Abhinav", "Chirag", "Darsh",
+  "Farhan", "Harshil", "Ishan", "Jai", "Kabir", "Lalit", "Mihir", "Naman", "Piyush", "Rudra",
 ];
 
-const maleNames = ["Amit", "Rahul", "Nikhil", "Harsh", "Yash", "Aditya", "Karan", "Manish", "Siddharth", "Varun"];
-const femaleNames = ["Neha", "Pooja", "Kavya", "Simran", "Anjali", "Nisha", "Priya", "Shreya", "Aditi", "Ritika"];
-const lastNames = ["Sharma", "Gupta", "Patel", "Singh", "Khan", "Joshi", "Nair", "Reddy", "Das", "Mehta"];
-const skillSets = [["React", "Node"], ["Python", "Django"], ["Java", "Spring"], ["UI", "Figma"], ["Go", "Docker"]];
-const abouts = [
-  "Software engineer who likes clean code and weekend hikes.",
-  "Builds web apps and learns something new every week.",
-  "Looking for a teammate who enjoys shipping products.",
-  "Designer-developer who cares about small details.",
-  "Backend engineer. Databases, APIs, and quiet mornings.",
+const femaleFirst = [
+  "Sara", "Meera", "Ananya", "Ishita", "Aisha", "Diya", "Kiara", "Navya", "Pari", "Riya",
+  "Saanvi", "Tara", "Zoya", "Myra", "Neha", "Pooja", "Kavya", "Simran", "Anjali", "Nisha",
+  "Priya", "Shreya", "Aditi", "Ritika", "Aarohi", "Avni", "Bhavya", "Charvi", "Esha", "Fatima",
+  "Gauri", "Hina", "Ira", "Jiya", "Kritika", "Lavanya", "Mahika", "Nandini", "Ojasvi", "Prisha",
+  "Radhika", "Sia", "Trisha", "Urvi", "Vanya", "Wamiqa", "Yashika", "Zara", "Aanya", "Inaaya",
+  "Mira", "Noor", "Pihu", "Rhea", "Sanya", "Tanya", "Uma", "Vedika", "Wisha", "Zaina",
 ];
 
-for (let i = 0; i < 100; i += 1) {
-  const female = i >= 50;
-  const first = (female ? femaleNames : maleNames)[i % 10];
-  const last = lastNames[i % 10] + (i + 1);
-  people.push([
-    first,
-    last,
-    21 + (i % 12),
-    female ? "female" : "male",
-    abouts[i % abouts.length],
-    skillSets[i % skillSets.length],
-    `https://randomuser.me/api/portraits/${female ? "women" : "men"}/${i % 100}.jpg`,
-  ]);
+const lastNames = [
+  "Mehta", "Khan", "Singh", "Iyer", "Das", "Rao", "Joshi", "Verma", "Kapoor", "Sharma",
+  "Malhotra", "Reddy", "Nair", "Banerjee", "Patel", "Gill", "Qureshi", "Chopra", "Gupta", "Bhat",
+  "Agarwal", "Chawla", "Desai", "Fernandes", "Ghosh", "Hegde", "Iqbal", "Jain", "Kaul", "Lal",
+  "Menon", "Naik", "Oberoi", "Pillai", "Raina", "Saxena", "Trivedi", "Uppal", "Vyas", "Yadav",
+];
+
+const skillSets = [
+  ["React", "TypeScript", "Node.js"],
+  ["Node.js", "MongoDB", "Express"],
+  ["Python", "Django", "PostgreSQL"],
+  ["Java", "Spring", "Kafka"],
+  ["React Native", "JavaScript", "Firebase"],
+  ["UI", "Figma", "CSS"],
+  ["Go", "Docker", "Kubernetes"],
+  ["AWS", "Terraform", "Linux"],
+  ["GraphQL", "React", "Apollo"],
+  ["Next.js", "Tailwind", "Vercel"],
+  ["Flutter", "Dart", "Firebase"],
+  ["ML", "Python", "Pandas"],
+  ["SQL", "dbt", "Python"],
+  ["Swift", "iOS", "UIKit"],
+  ["Kotlin", "Android", "Jetpack"],
+  ["C#", ".NET", "Azure"],
+  ["PHP", "Laravel", "MySQL"],
+  ["Rust", "WebAssembly", "Linux"],
+  ["Redis", "Node.js", "Microservices"],
+  ["Cybersecurity", "Auth", "Node.js"],
+];
+
+const maleAbouts = [
+  "Full stack engineer who ships React and Node apps on weekends.",
+  "Backend developer. Clean APIs, indexes, and on-call that stays quiet.",
+  "Mobile engineer exploring web. Always up for a weekend hackathon.",
+  "DevOps by day, chess by night. I like boring deploys.",
+  "Product engineer. I care about the last 10% of polish.",
+  "Open source contributor looking for a serious side-project teammate.",
+  "System design nerd. Distributed systems and strong coffee.",
+  "Data engineer who turns messy logs into dashboards people actually use.",
+  "Security-minded developer. I review the auth flow before I merge.",
+  "Builds SaaS MVPs fast and talks honestly about tradeoffs.",
+];
+
+const femaleAbouts = [
+  "Frontend lead. Motion, accessibility, and screens that feel fast.",
+  "Backend engineer who cares about clean contracts and tests.",
+  "Design engineer sitting between Figma and production CSS.",
+  "Data scientist. Clear charts, better questions, no mystery metrics.",
+  "Full stack developer looking for people who actually ship.",
+  "Mobile developer building smooth Android and iOS apps.",
+  "DevOps engineer. Pipelines, alerts, and zero-drama releases.",
+  "Product engineer. React by day, side projects by night.",
+  "ML engineer exploring applied NLP for developer tools.",
+  "UI engineer who turns messy briefs into working interfaces.",
+];
+
+const people = [];
+
+const pushPerson = (firstName, lastName, gender, index) => {
+  const female = gender === "female";
+  const abouts = female ? femaleAbouts : maleAbouts;
+  const photo = `https://randomuser.me/api/portraits/${female ? "women" : "men"}/${index % 100}.jpg`;
+  people.push({
+    firstName,
+    lastName,
+    age: 21 + ((index * 3) % 14),
+    gender,
+    about: abouts[index % abouts.length],
+    skills: skillSets[index % skillSets.length],
+    photoUrl: photo,
+    emailId: `${firstName}.${lastName}${index}@devtinder.test`.toLowerCase(),
+  });
+};
+
+for (let i = 0; i < 60; i += 1) {
+  pushPerson(maleFirst[i % maleFirst.length], lastNames[i % lastNames.length], "male", i);
+}
+for (let i = 0; i < 60; i += 1) {
+  pushPerson(femaleFirst[i % femaleFirst.length], lastNames[(i + 7) % lastNames.length], "female", i);
 }
 
 const seed = async () => {
@@ -63,30 +114,37 @@ const seed = async () => {
   const password = await bcrypt.hash(DUMMY_PASSWORD, 10);
   let created = 0;
 
-  for (const [index, person] of people.entries()) {
-    const [firstName, lastName, age, gender, about, skills, photo] = person;
-    const emailId = `${firstName}.${lastName}@devtinder.test`.toLowerCase();
-    const exists = await User.findOne({ emailId });
-    if (exists) continue;
+  for (const person of people) {
+    const exists = await User.findOne({ emailId: person.emailId });
+    if (exists) {
+      exists.age = person.age;
+      exists.gender = person.gender;
+      exists.about = person.about;
+      exists.skills = person.skills;
+      exists.photoUrl = person.photoUrl;
+      await exists.save();
+      continue;
+    }
 
     await User.create({
-      firstName,
-      lastName,
-      emailId,
+      firstName: person.firstName,
+      lastName: person.lastName,
+      emailId: person.emailId,
       password,
-      age,
-      gender,
-      about,
-      skills,
-      photoUrl: String(photo || "").startsWith("http")
-        ? photo
-        : `https://i.pravatar.cc/600?img=${photo || index + 11}`,
+      age: person.age,
+      gender: person.gender,
+      about: person.about,
+      skills: person.skills,
+      photoUrl: person.photoUrl,
     });
     created += 1;
   }
 
   const total = await User.countDocuments();
-  console.log(`Added ${created} feed profiles. Users in database: ${total}`);
+  const men = await User.countDocuments({ gender: "male" });
+  const women = await User.countDocuments({ gender: "female" });
+  console.log(`Added ${created} new test profiles (password: ${DUMMY_PASSWORD}).`);
+  console.log(`Users in database: ${total} (male ${men}, female ${women})`);
   await mongoose.disconnect();
 };
 

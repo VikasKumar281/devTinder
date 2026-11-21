@@ -298,6 +298,24 @@ const userSchema = new mongoose.Schema(
     skills: {
       type: [String],
     },
+    isPremium: {
+      type: Boolean,
+      default: false,
+    },
+    membershipType: {
+      type: String,
+      enum: ["free", "pulse", "aura", "orbit"],
+      default: "free",
+    },
+    membershipExpiresAt: {
+      type: Date,
+    },
+    stripeCustomerId: {
+      type: String,
+    },
+    stripeSubscriptionId: {
+      type: String,
+    },
   },
   { timestamps: true }
 );

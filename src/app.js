@@ -30,6 +30,9 @@ app.use(cors({
 }));
 
 
+const { handleStripeWebhook } = require("./routes/premium");
+app.post("/premium/webhook", express.raw({ type: "application/json" }), handleStripeWebhook);
+
 app.use(express.json({ limit: "15mb" })); 
 app.use(cookieParser());
 
@@ -51,6 +54,7 @@ const userRouter = require("./routes/user");
 const initializeSocket = require("./utils/socket");
 const chatRouter = require("./routes/chat");
 const supportRouter = require("./routes/support");
+const { premiumRouter } = require("./routes/premium");
 
 
 
@@ -62,6 +66,7 @@ app.use("/" , requestRouter);
 app.use("/" , userRouter);
 app.use("/" , chatRouter);
 app.use("/" , supportRouter);
+app.use("/" , premiumRouter);
 
 
 const server = http.createServer(app);
@@ -170,13 +175,12 @@ initializeSocket(server);
 
 const PORT = process.env.PORT || 7777;
 
-server.listen(PORT, "0.0.0.0", () => {
-  console.log("Server is listening on port " + PORT);
-});
-
 connectDB()
   .then(() => {
     console.log("Database connection established");
+    server.listen(PORT, "0.0.0.0", () => {
+      console.log("Server is listening on port " + PORT);
+    });
   })
   .catch((err) => {
     console.error("Database can not be connected", err);
