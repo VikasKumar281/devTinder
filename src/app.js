@@ -50,6 +50,7 @@ const requestRouter = require("./routes/request");
 const userRouter = require("./routes/user");
 const initializeSocket = require("./utils/socket");
 const chatRouter = require("./routes/chat");
+const supportRouter = require("./routes/support");
 
 
 
@@ -60,6 +61,7 @@ app.use("/" , profileRouter);
 app.use("/" , requestRouter);
 app.use("/" , userRouter);
 app.use("/" , chatRouter);
+app.use("/" , supportRouter);
 
 
 const server = http.createServer(app);
