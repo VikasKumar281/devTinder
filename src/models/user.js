@@ -316,6 +316,12 @@ const userSchema = new mongoose.Schema(
     stripeSubscriptionId: {
       type: String,
     },
+    resetToken: {
+      type: String,
+    },
+    resetTokenExpires: {
+      type: Date,
+    },
   },
   { timestamps: true }
 );
