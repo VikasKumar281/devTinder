@@ -3,7 +3,10 @@ const Stripe = require("stripe");
 const premiumRouter = express.Router();
 const { userAuth } = require("../middlewares/auth");
 const User = require("../models/user");
+const Membership = require("../models/membership");
 const { PLANS } = require("../utils/plans");
+const { createNotification } = require("../utils/notify");
+const Notification = require("../models/notification");
 
 const PLAN_ORDER = ["pulse", "aura", "orbit"];
 
@@ -32,17 +35,55 @@ const expiryFromSubscription = (subscription) => {
   return new Date(Date.now() + 31 * 24 * 60 * 60 * 1000);
 };
 
-const applyPlan = async (userId, plan, subscription, customerId) => {
+const applyPlan = async (userId, plan, subscription, customerId, sessionId) => {
   if (!userId || !PLANS[plan]) return;
   const subscriptionId =
     typeof subscription === "string" ? subscription : subscription?.id;
+  const customer =
+    typeof customerId === "string" ? customerId : customerId?.id;
+  const expiresAt = expiryFromSubscription(subscription);
+
   await User.findByIdAndUpdate(userId, {
     membershipType: plan,
     isPremium: true,
     stripeSubscriptionId: subscriptionId || undefined,
-    stripeCustomerId: customerId || undefined,
-    membershipExpiresAt: expiryFromSubscription(subscription),
+    stripeCustomerId: customer || undefined,
+    membershipExpiresAt: expiresAt,
   });
+
+  await Membership.findOneAndUpdate(
+    {
+      userId,
+      stripeSubscriptionId: subscriptionId || sessionId || plan,
+    },
+    {
+      userId,
+      plan,
+      amount: PLANS[plan].monthlyAmount,
+      currency: "inr",
+      stripeCustomerId: customer,
+      stripeSubscriptionId: subscriptionId,
+      stripeSessionId: sessionId,
+      status: "active",
+      expiresAt,
+    },
+    { upsert: true, new: true }
+  );
+
+  const recent = await Notification.findOne({
+    userId,
+    type: "membership",
+    createdAt: { $gt: new Date(Date.now() - 2 * 60 * 1000) },
+  });
+  if (!recent) {
+    await createNotification({
+      userId,
+      type: "membership",
+      title: "You're on " + PLANS[plan].name,
+      body: PLANS[plan].tagline + " · " + PLANS[plan].displayPrice + "/month",
+      link: "/premium",
+    });
+  }
 };
 
 premiumRouter.get("/premium/plans", (req, res) => {
@@ -55,15 +96,21 @@ premiumRouter.get("/premium/plans", (req, res) => {
   });
 });
 
-premiumRouter.get("/premium/status", userAuth, (req, res) => {
+premiumRouter.get("/premium/status", userAuth, async (req, res) => {
   const user = req.user;
   const expired =
     user.membershipExpiresAt && new Date(user.membershipExpiresAt) < new Date();
+  const membershipType = expired ? "free" : user.membershipType || "free";
+  const purchases = await Membership.find({ userId: user._id })
+    .sort({ createdAt: -1 })
+    .limit(8);
   res.json({
     data: {
-      membershipType: expired ? "free" : user.membershipType || "free",
+      membershipType,
       isPremium: expired ? false : Boolean(user.isPremium),
       membershipExpiresAt: user.membershipExpiresAt || null,
+      plan: PLANS[membershipType] || null,
+      purchases,
     },
   });
 });
@@ -86,7 +133,6 @@ premiumRouter.post("/premium/checkout", userAuth, async (req, res) => {
 
     const sessionConfig = {
       mode: "subscription",
-      payment_method_types: ["card"],
       line_items: [
         {
           price_data: {
@@ -122,13 +168,26 @@ premiumRouter.post("/premium/checkout", userAuth, async (req, res) => {
       sessionConfig.customer_email = req.user.emailId;
     }
 
-    const session = await stripe.checkout.sessions.create(sessionConfig);
+    let session;
+    try {
+      session = await stripe.checkout.sessions.create(sessionConfig);
+    } catch (stripeErr) {
+      const code = stripeErr?.raw?.code || stripeErr?.code;
+      if (sessionConfig.customer && code === "resource_missing") {
+        delete sessionConfig.customer;
+        sessionConfig.customer_email = req.user.emailId;
+        session = await stripe.checkout.sessions.create(sessionConfig);
+      } else {
+        throw stripeErr;
+      }
+    }
     if (!session.url) {
       throw new Error("Stripe did not return a checkout URL");
     }
     res.json({ data: { url: session.url } });
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    const message = err?.raw?.message || err.message || "Checkout failed";
+    res.status(400).json({ message });
   }
 });
 
@@ -152,7 +211,8 @@ premiumRouter.get("/premium/session/:id", userAuth, async (req, res) => {
         userId,
         session.metadata?.plan,
         session.subscription,
-        session.customer
+        session.customer,
+        session.id
       );
     }
 
@@ -197,7 +257,8 @@ const handleStripeWebhook = async (req, res) => {
         userId,
         session.metadata?.plan,
         session.subscription,
-        session.customer
+        session.customer,
+        session.id
       );
     }
 

@@ -55,6 +55,7 @@ const initializeSocket = require("./utils/socket");
 const chatRouter = require("./routes/chat");
 const supportRouter = require("./routes/support");
 const { premiumRouter } = require("./routes/premium");
+const notificationsRouter = require("./routes/notifications");
 
 
 
@@ -67,6 +68,7 @@ app.use("/" , userRouter);
 app.use("/" , chatRouter);
 app.use("/" , supportRouter);
 app.use("/" , premiumRouter);
+app.use("/" , notificationsRouter);
 
 
 const server = http.createServer(app);

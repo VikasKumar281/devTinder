@@ -4,6 +4,7 @@ const requestRouter = express.Router();
 const { userAuth } = require("../middlewares/auth");
 const ConnectionRequest = require("../models/connectionRequest");
 const User = require("../models/user");
+const { createNotification } = require("../utils/notify");
 
 
 requestRouter.post(
@@ -47,11 +48,17 @@ requestRouter.post(
 
       const data = await connectionRequest.save();
 
-      // const emailRes = await sendEmail.run(
-      //   "A new friend request from " + req.user.firstName,
-      //   req.user.firstName + " is " + status + " in " + toUser.firstName
-      // );
-      // console.log(emailRes);
+      if (status === "interested") {
+        await createNotification({
+          userId: toUserId,
+          fromUserId: fromUserId,
+          type: "request",
+          title: req.user.firstName + " sent you a request",
+          body: "Open Requests to accept or pass.",
+          link: "/requests",
+          photoUrl: req.user.photoUrl || "",
+        });
+      }
 
       res.json({
         message:
@@ -91,6 +98,28 @@ requestRouter.post(
       connectionRequest.status = status;
 
       const data = await connectionRequest.save();
+
+      if (status === "accepted") {
+        const fromUser = await User.findById(connectionRequest.fromUserId);
+        await createNotification({
+          userId: connectionRequest.fromUserId,
+          fromUserId: loggedInUser._id,
+          type: "match",
+          title: "It's a match with " + loggedInUser.firstName,
+          body: "You can start chatting now.",
+          link: "/chat/" + loggedInUser._id,
+          photoUrl: loggedInUser.photoUrl || "",
+        });
+        await createNotification({
+          userId: loggedInUser._id,
+          fromUserId: connectionRequest.fromUserId,
+          type: "match",
+          title: "It's a match with " + (fromUser?.firstName || "a developer"),
+          body: "You can start chatting now.",
+          link: "/chat/" + connectionRequest.fromUserId,
+          photoUrl: fromUser?.photoUrl || "",
+        });
+      }
 
       res.json({ message: "Connection request " + status, data });
     } catch (err) {

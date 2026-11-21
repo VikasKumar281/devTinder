@@ -1,6 +1,8 @@
 const socket = require("socket.io");
 const crypto = require("crypto");
 const { Chat } = require("../models/chat");
+const { createNotification } = require("./notify");
+const User = require("../models/user");
 const { timeStamp } = require("console");
 
 
@@ -52,8 +54,18 @@ const initializeSocket = (server) => {
                     senderId: userId,
                     text,
                   });
-                  await chat.save()
+                  await chat.save();
                   io.to(roomId).emit("messageReceived",{firstName,lastName, text, timeStamp: new Date() });
+                  const sender = await User.findById(userId).select("firstName photoUrl");
+                  await createNotification({
+                    userId: targetUserId,
+                    fromUserId: userId,
+                    type: "message",
+                    title: (sender?.firstName || firstName || "Someone") + " sent a message",
+                    body: String(text || "").slice(0, 120),
+                    link: "/chat/" + userId,
+                    photoUrl: sender?.photoUrl || "",
+                  });
                 }
                 catch(err){
                   console.log(err.message);
