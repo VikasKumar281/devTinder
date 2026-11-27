@@ -45,6 +45,7 @@ const layout = ({ title, intro, body, button, note }) => `<!DOCTYPE html>
 </html>`;
 
 const smtpReady = () => Boolean(process.env.SMTP_USER && process.env.SMTP_PASS);
+const brevoReady = () => (process.env.BREVO_API_KEY || "").trim().startsWith("xkeysib-");
 
 const sendSmtp = async ({ to, subject, text, html }) => {
   const user = process.env.SMTP_USER.trim();
@@ -54,6 +55,9 @@ const sendSmtp = async ({ to, subject, text, html }) => {
     port: Number(process.env.SMTP_PORT || 465),
     secure: String(process.env.SMTP_PORT || 465) !== "587",
     auth: { user, pass },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000,
   });
   await transporter.sendMail({
     from: process.env.MAIL_FROM || `DevTinder <${user}>`,
@@ -63,6 +67,34 @@ const sendSmtp = async ({ to, subject, text, html }) => {
     text,
     html,
   });
+};
+
+const sendViaBrevo = async ({ to, subject, text, html }) => {
+  const senderEmail = (process.env.BREVO_SENDER || ADMIN_EMAIL).trim();
+  const response = await axios.post(
+    "https://api.brevo.com/v3/smtp/email",
+    {
+      sender: { name: "DevTinder", email: senderEmail },
+      to: [{ email: to }],
+      replyTo: { email: ADMIN_EMAIL },
+      subject,
+      htmlContent: html,
+      textContent: text,
+    },
+    {
+      headers: {
+        "api-key": process.env.BREVO_API_KEY.trim(),
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      timeout: 15000,
+      validateStatus: () => true,
+    }
+  );
+  if (response.status >= 400) {
+    const message = response.data?.message || response.data?.code || "Could not send email";
+    throw new Error(message);
+  }
 };
 
 const sendViaFormSubmit = async (to, fields) => {
@@ -87,6 +119,10 @@ const sendViaFormSubmit = async (to, fields) => {
 };
 
 const deliver = async ({ to, subject, text, html, fields }) => {
+  if (brevoReady()) {
+    await sendViaBrevo({ to, subject, text, html });
+    return;
+  }
   if (smtpReady()) {
     await sendSmtp({ to, subject, text, html });
     return;
