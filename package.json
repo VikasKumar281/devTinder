@@ -22,6 +22,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.9.2",
     "node-cron": "^3.0.3",
+    "nodemailer": "^10.6.1",
     "socket.io": "^4.8.1",
     "stripe": "^23.2.0",
     "validator": "^13.12.0"
